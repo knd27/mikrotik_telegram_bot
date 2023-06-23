@@ -1,0 +1,32 @@
+:local send [:parse [/system script get tg_sendMessage source]]
+:put $params
+:put $chatid
+:put $from
+
+:local datetime "$[/system clock get date] $[/system clock get time]"
+:local secret [:len [/ppp secret find service=pppoe]]
+:local active [:len [/ppp active find service=pppoe]]
+
+:local status
+:local pppname 
+:local output
+
+:set output "Router ID:* $[/system identity get name] * %0A\
+Tanggal: _$datetime_%0A\
+*Total Pelanggan: $secret*%0A%0A\
+*yang Offline:*%0A"
+
+:local x 0
+:foreach pppuser in=[/ppp secret find service=pppoe] do={
+	:local pppname [/ppp secret get $pppuser name]
+	:do {
+		:local tmp [/ppp active get [find where name="$pppname"]]
+	} on-error={
+            :set x ($x + 1)
+            :set output ($output. "$x. ".$pppname."%0A")
+	}
+}
+
+$send chat=$chatid text=("$output") mode="Markdown"
+
+
