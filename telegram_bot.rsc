@@ -715,6 +715,7 @@ add name=tg_cmd_help policy=read source=":local send [:parse [/sys\
     \n - enable <username>%0A\\\r\
     \n - setprofile <username> <profile>%0A\\\r\
     \n - change-password <username> <password>%0A\\\r\
+    \n/offline%0A\\\r\
     \n/ping to <ip>%0A\\\r\
     \n/monitoring%0A\\\r\
     \n - interface <interface>%0A\\\r\
@@ -1011,3 +1012,37 @@ add name=tg_cmd_stop policy=read source=":global monitoring;\r\
     \n:delay 5s;\r\
     \n/system script environment remove monitoring;\r\
     \n"
+add dont-require-permissions=no name=tg_cmd_offline policy=read source=":local send [:parse [/system script get tg_sendMessage source]]\r\
+    \n:put \$params\r\
+    \n:put \$chatid\r\
+    \n:put \$from\r\
+    \n\r\
+    \n:local datetime \"\$[/system clock get date] \$[/system clock get time]\"\r\
+    \n:local secret [:len [/ppp secret find service=pppoe]]\r\
+    \n:local active [:len [/ppp active find service=pppoe]]\r\
+    \n\r\
+    \n:local status\r\
+    \n:local pppname \r\
+    \n:local output\r\
+    \n\r\
+    \n:set output \"Router ID:* \$[/system identity get name] * %0A\\\r\
+    \nTanggal: _\$datetime_%0A\\\r\
+    \n*Total Pelanggan: \$secret*%0A%0A\\\r\
+    \n*yang Offline:*%0A\"\r\
+    \n\r\
+    \n:local x 0\r\
+    \n:foreach pppuser in=[/ppp secret find service=pppoe] do={\r\
+    \n\t:local pppname [/ppp secret get \$pppuser name]\r\
+    \n\t:do {\r\
+    \n\t\t:local tmp [/ppp active get [find where name=\"\$pppname\"]]\r\
+    \n\t} on-error={\r\
+    \n            :set x (\$x + 1)\r\
+    \n            :set output (\$output. \"\$x. \".\$pppname.\"%0A\")\r\
+    \n\t}\r\
+    \n}\r\
+    \n\r\
+    \n\r\
+    \n\$send chat=\$chatid text=(\"\$output\") mode=\"Markdown\"\r\
+    \n\r\
+    \n"
+
